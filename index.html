@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🇬🇧 英留美食地图 · UK Foodie Interactive Map</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇬🇧</text></svg>">
+  
+  <!-- Leaflet & MarkerCluster Styles -->
+  <link rel="stylesheet" href="assets/vendor/leaflet.css" />
+  <link rel="stylesheet" href="assets/vendor/MarkerCluster.css" />
+  <link rel="stylesheet" href="assets/vendor/MarkerCluster.Default.css" />
+  
+  <!-- Custom Modern UI Styles -->
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">🇬🇧</div>
+      <div>
+        <div class="brand-title">
+          <span>英留美食地图</span>
+          <span class="brand-badge">2024-2025 真实探店</span>
+        </div>
+        <div class="brand-sub">137 家精选餐厅 · 250+ 真实探店实拍图 · 9 大城市</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-lucky" id="btnLucky" title="不知道吃什么？让美食地图帮你选！">
+        <span>🎲</span> 今天吃什么？
+      </button>
+      <button class="btn" id="btnThemeToggle" title="切换深色/浅色模式">
+        🌙 深色
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="app-body">
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-controls">
+        <!-- Search Box -->
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            class="search-input" 
+            id="searchInput" 
+            placeholder="搜索餐厅、菜系、招牌菜、邮编 (如 螺蛳粉, W1D, 烤肉)..." 
+            autocomplete="off"
+          />
+          <button class="search-clear" id="searchClear" title="清空搜索">✕</button>
+        </div>
+
+        <!-- Rating Filter Chips -->
+        <div class="filter-row" id="ratingChips">
+          <button class="chip active" data-rating="all">全部评分</button>
+          <button class="chip chip-rating-star" data-rating="star">🌟 必吃推荐</button>
+          <button class="chip chip-rating-thumb" data-rating="thumb_up">👍 口碑好店</button>
+          <button class="chip chip-rating-down" data-rating="thumb_down">👎 避坑排雷</button>
+          <button class="chip" data-rating="closed">⚠️ 已关门</button>
+        </div>
+
+        <!-- City Filter Chips -->
+        <div class="filter-row" id="cityChips">
+          <button class="chip active" data-city="all">全英国</button>
+          <button class="chip" data-city="伦敦">伦敦</button>
+          <button class="chip" data-city="爱丁堡">爱丁堡</button>
+          <button class="chip" data-city="曼彻斯特">曼彻斯特</button>
+          <button class="chip" data-city="剑桥">剑桥</button>
+          <button class="chip" data-city="牛津">牛津</button>
+          <button class="chip" data-city="伯明翰">伯明翰</button>
+          <button class="chip" data-city="格拉斯哥">格拉斯哥</button>
+          <button class="chip" data-city="康沃尔">康沃尔</button>
+        </div>
+
+        <!-- Category & Sub-Area Controls -->
+        <div class="secondary-filters">
+          <!-- London Area Dropdown -->
+          <div id="londonAreaWrap" style="display: flex; align-items: center; gap: 6px;">
+            <label for="londonAreaSelect" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">区域:</label>
+            <select class="filter-select" id="londonAreaSelect">
+              <option value="all">伦敦全部区域</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cuisine Category Filter Chips -->
+        <div class="filter-row" id="categoryChips">
+          <button class="chip active" data-category="all">全品类</button>
+          <button class="chip" data-category="中餐">🥢 中餐</button>
+          <button class="chip" data-category="亚洲菜">🍜 亚洲菜</button>
+          <button class="chip" data-category="西餐">🥩 西餐</button>
+          <button class="chip" data-category="甜品饮品">🍰 甜品奶茶</button>
+          <button class="chip" data-category="酒吧夜生活">🍸 酒吧夜生活</button>
+        </div>
+
+        <!-- Stats Counter -->
+        <div class="stats-bar">
+          <div>显示 <strong id="visibleCount" style="color: var(--primary);">0</strong> 家餐厅</div>
+          <div>包含 <span id="totalPhotosCount" style="font-weight: 600;">0</span> 张实拍探店照片</div>
+        </div>
+      </div>
+
+      <!-- Restaurant Cards List -->
+      <div class="sidebar-list" id="restoList">
+        <!-- Rendered dynamically -->
+      </div>
+    </aside>
+
+    <!-- Right Map Wrap -->
+    <main class="map-wrap">
+      <!-- Quick City Jump Floating Bar -->
+      <div class="map-quick-cities">
+        <button class="btn-city-jump" data-city="all">🇬🇧 全英</button>
+        <button class="btn-city-jump" data-city="伦敦">🎡 伦敦</button>
+        <button class="btn-city-jump" data-city="市中心/Soho">🏮 Soho/唐人街</button>
+        <button class="btn-city-jump" data-city="Battersea">🏫 Battersea</button>
+        <button class="btn-city-jump" data-city="Kensington">🏛️ Kensington</button>
+        <button class="btn-city-jump" data-city="White City">🛍️ White City</button>
+        <button class="btn-city-jump" data-city="爱丁堡">🏰 爱丁堡</button>
+        <button class="btn-city-jump" data-city="曼彻斯特">🐝 曼城</button>
+        <button class="btn-city-jump" data-city="剑桥">🎓 剑桥</button>
+        <button class="btn-city-jump" data-city="牛津">📚 牛津</button>
+        <button class="btn-city-jump" data-city="康沃尔彭赞斯">🌊 康沃尔</button>
+      </div>
+
+      <!-- Map Control Tools Right -->
+      <div class="map-tools-right">
+        <button class="map-control-btn" id="btnLocateMe" title="定位到当前所在位置">🎯</button>
+        <button class="map-control-btn" id="btnResetMap" title="重置地图视角">🔄</button>
+      </div>
+
+      <!-- Leaflet Map Container -->
+      <div id="map"></div>
+
+      <!-- Detail Drawer (Slide Sheet) -->
+      <div class="detail-drawer" id="detailDrawer">
+        <div class="drawer-header">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">探店详情指南</span>
+          <button class="drawer-close" id="drawerClose" title="关闭详情">✕</button>
+        </div>
+        <div class="drawer-content" id="drawerContent">
+          <!-- Dynamic Content -->
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Lightbox Modal for Fullscreen Photos -->
+<div class="lightbox-modal" id="lightboxModal">
+  <button class="lightbox-close" id="lightboxClose" title="关闭 (Esc)">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" title="上一张 (←)">‹</button>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" title="下一张 (→)">›</button>
+  <div class="lightbox-img-wrap">
+    <img class="lightbox-img" id="lightboxImg" src="" alt="探店大图" />
+  </div>
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- Lucky Restaurant Modal ("今天吃什么") -->
+<div class="lucky-modal" id="luckyModal">
+  <div class="lucky-card" id="luckyCard">
+    <!-- Dynamic Content -->
+  </div>
+</div>
+
+<!-- Toast Message Feedback -->
+<div class="toast-msg" id="toastMsg">已复制到剪贴板！</div>
+
+<!-- Scripts -->
+<script src="assets/vendor/leaflet.js"></script>
+<script src="assets/vendor/leaflet.markercluster.js"></script>
+<script src="data/restaurants.js"></script>
+<script>
+  if (!window.RESTAURANTS_DATA) {
+    document.write('<script src="restaurants.js"><\/script>');
+  }
+</script>
+<script src="app.js"></script>
+
+</body>
+</html>
