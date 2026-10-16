@@ -18,9 +18,12 @@
   --text-sub: #94a3b8;
 
   --panel-width: 380px;
+  --right-panel-width: 420px;
   --panel-radius: 16px;
-  --panel-shadow: 0 8px 30px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
-  --toggle-size: 32px;
+  --panel-shadow: 0 8px 30px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  --toggle-size: 34px;
+  --mobile-peek-height: 88px;
+  --mobile-expanded-height: 74vh;
 
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -64,6 +67,7 @@ body {
   display: flex;
   align-items: stretch;
   pointer-events: none; /* panel itself transparent, children receive events */
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
 }
 
 .float-left {
@@ -79,9 +83,10 @@ body {
 /* Panel inner card */
 .panel-inner {
   width: var(--panel-width);
+  height: 100%;
   background: var(--bg-panel);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: var(--panel-radius);
   box-shadow: var(--panel-shadow);
   border: 1px solid var(--border);
@@ -89,28 +94,29 @@ body {
   flex-direction: column;
   overflow: hidden;
   pointer-events: all;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              opacity 0.25s ease;
+  transform: translate3d(0, 0, 0);
   opacity: 1;
 }
 
-/* Collapsed state — panel slides out */
+/* Collapsed state — GPU slide out */
 .float-left.collapsed .panel-inner {
-  width: 0;
-  opacity: 0;
-  border-width: 0;
-  overflow: hidden;
+  transform: translate3d(calc(-100% - 24px), 0, 0);
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .float-right.collapsed .panel-inner {
-  width: 0;
+  transform: translate3d(calc(100% + 24px), 0, 0);
+  box-shadow: none;
+  pointer-events: none;
   opacity: 0;
-  border-width: 0;
-  overflow: hidden;
 }
 
-/* ── Toggle button ── */
+/* ── Toggle buttons (Desktop) ── */
 .panel-toggle {
-  width: var(--toggle-size);
   height: var(--toggle-size);
   border-radius: 50%;
   background: var(--bg-panel);
@@ -126,17 +132,87 @@ body {
   justify-content: center;
   flex-shrink: 0;
   align-self: center;
-  margin: 0 6px;
-  transition: all 0.2s;
+  margin: 0 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: all;
   z-index: 10;
+  font-family: var(--font);
+  user-select: none;
+}
+
+.toggle-left {
+  width: var(--toggle-size);
+  padding: 0;
+}
+
+.toggle-left .toggle-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+/* When left panel is collapsed on desktop, toggle button transforms into an accessible pill button */
+.float-left.collapsed .toggle-left {
+  width: auto;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  margin-left: 0;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.float-left.collapsed .toggle-left .toggle-label {
+  display: inline;
 }
 
 .panel-toggle:hover {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
-  transform: scale(1.1);
+  transform: scale(1.08);
+}
+
+.float-left.collapsed .toggle-left:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: scale(1.04);
+}
+
+/* Right toggle button */
+.toggle-right {
+  width: var(--toggle-size);
+}
+
+.float-right.collapsed .toggle-right {
+  display: none !important;
+}
+
+/* ── Mobile Sheet Handle Bar ── */
+.sheet-handle-bar {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 4px;
+  cursor: pointer;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.sheet-handle-pill {
+  width: 40px;
+  height: 4.5px;
+  border-radius: 999px;
+  background: var(--text-sub);
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.sheet-handle-bar:active .sheet-handle-pill {
+  opacity: 1;
+  transform: scaleX(1.15);
 }
 
 /* ── Branding ── */
@@ -144,12 +220,17 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px 10px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-.brand-flag { font-size: 28px; line-height: 1; }
+.brand-flag { font-size: 26px; line-height: 1; }
+
+.brand-meta {
+  flex: 1;
+  min-width: 0;
+}
 
 .brand-name {
   font-size: 15px;
@@ -162,6 +243,113 @@ body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-lucky-header {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.btn-lucky-header:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+/* ── Drawer Header Bar ── */
+.drawer-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.drawer-header-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
+}
+
+.drawer-back-btn {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.drawer-back-btn:hover {
+  background: var(--border);
+}
+
+.drawer-back-btn .back-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.drawer-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.drawer-close-btn:hover {
+  background: var(--avoid-red);
+  color: #fff;
+  border-color: var(--avoid-red);
+}
+
+/* ── Mobile backdrop ── */
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 650;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+.mobile-backdrop.active {
+  opacity: 1;
+  pointer-events: all;
 }
 
 /* ── Search box ── */
@@ -443,11 +631,7 @@ body {
 /* ── Right panel (detail) ── */
 .float-right .panel-inner {
   overflow-y: auto;
-  width: 420px;
-}
-
-.float-right.collapsed .panel-inner {
-  width: 0;
+  width: var(--right-panel-width, 420px);
 }
 
 .drawer-placeholder {
@@ -614,12 +798,12 @@ body {
   gap: 8px;
   z-index: 600;
   /* shift left when right panel is open */
-  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: right 0.32s cubic-bezier(0.16, 1, 0.3, 1), top 0.2s;
 }
 
 /* When right panel is open, push fabs left */
 body:not(.right-collapsed) .map-fab-group {
-  right: calc(420px + 16px + 16px + 6px + 32px);
+  right: calc(var(--right-panel-width, 420px) + 28px);
 }
 
 .map-fab {
@@ -852,158 +1036,264 @@ body:not(.right-collapsed) .map-fab-group {
 }
 
 /* ══════════════════════════════════════════════════
-   RESPONSIVE — Tablet (≤ 900px)
+   RESPONSIVE — Tablet (641px - 960px)
    ══════════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  :root { --panel-width: 320px; }
-  .float-right .panel-inner { width: 340px; }
+@media (min-width: 641px) and (max-width: 960px) {
+  :root {
+    --panel-width: 320px;
+    --right-panel-width: 350px;
+  }
+
   body:not(.right-collapsed) .map-fab-group {
-    right: calc(340px + 16px + 6px + 32px);
+    right: calc(var(--right-panel-width) + 24px);
   }
 }
 
 /* ══════════════════════════════════════════════════
    RESPONSIVE — Mobile (≤ 640px)
-   Panels become bottom sheets that slide up
+   - Left panel transforms into a native-feel Bottom Sheet
+     (expanded 74vh vs peek 88px)
+   - Right panel transforms into a full-height slide-up Detail Sheet
    ══════════════════════════════════════════════════ */
 @media (max-width: 640px) {
+  :root {
+    --panel-width: 100%;
+    --right-panel-width: 100%;
+    --mobile-peek-height: 88px;
+    --mobile-expanded-height: 74vh;
+  }
 
-  /* ── Left panel: bottom sheet ── */
+  /* Sheet handle bar: visible on mobile */
+  .sheet-handle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0 4px;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+  }
+
+  .sheet-handle-pill {
+    width: 40px;
+    height: 4.5px;
+    border-radius: 999px;
+    background: var(--text-sub);
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .sheet-handle-bar:active .sheet-handle-pill {
+    opacity: 1;
+    transform: scaleX(1.15);
+  }
+
+  /* ── Left panel: Mobile Bottom Sheet ── */
   .float-left {
+    position: fixed;
     top: auto;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    flex-direction: column-reverse;
-    align-items: stretch;
+    width: 100%;
+    margin: 0;
+    flex-direction: column;
+    z-index: 500;
+    pointer-events: none;
   }
 
   .float-left .panel-inner {
     width: 100% !important;
-    height: 62vh;
-    border-radius: var(--panel-radius) var(--panel-radius) 0 0;
-    transform: translateY(0);
+    height: var(--mobile-expanded-height);
+    max-height: 84vh;
+    border-radius: 20px 20px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+    transform: translate3d(0, 0, 0);
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity   0.3s ease;
+                box-shadow 0.25s ease;
+    pointer-events: all;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
   }
 
+  /* Peek state on mobile */
   .float-left.collapsed .panel-inner {
-    width: 100% !important;
-    height: 62vh;
-    opacity: 1;
-    transform: translateY(100%);
-    border-width: 1px;
+    transform: translate3d(0, calc(100% - var(--mobile-peek-height)), 0);
+    box-shadow: 0 -4px 18px rgba(0,0,0,0.12);
+    cursor: pointer;
   }
 
+  /* Hide desktop toggle button on mobile */
   .toggle-left {
-    width: 52px !important;
-    height: 22px !important;
-    border-radius: 999px !important;
-    margin: 0 auto !important;
-    font-size: 10px !important;
-    align-self: center !important;
-    position: relative;
-    z-index: 10;
+    display: none !important;
   }
 
-  /* ── Right panel: full-screen overlay from right ── */
+  /* ── Right panel: Mobile Detail Sheet ── */
   .float-right {
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 750;
     flex-direction: column;
-    align-items: stretch;
-    z-index: 550;
+    pointer-events: none;
   }
 
   .float-right .panel-inner {
     width: 100% !important;
-    height: 100vh;
+    height: 100% !important;
     border-radius: 0;
-    transform: translateX(0);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity   0.3s ease;
+    border: none;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: all;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
     overflow-y: auto;
   }
 
   .float-right.collapsed .panel-inner {
-    width: 100% !important;
-    height: 100vh;
-    opacity: 0;
-    transform: translateX(100%);
-    border-width: 1px;
+    transform: translate3d(0, 100%, 0);
+    opacity: 1;
     pointer-events: none;
   }
 
+  /* Hide desktop right toggle button on mobile */
   .toggle-right {
-    position: absolute !important;
-    top: 12px !important;
-    right: 12px !important;
-    margin: 0 !important;
-    z-index: 20;
+    display: none !important;
   }
 
-  /* Gallery on mobile */
-  .gallery-main { height: 180px; border-radius: 0; }
+  /* Show back button in drawer header on mobile */
+  .drawer-back-btn {
+    display: flex;
+  }
 
-  /* FABs — above the bottom sheet */
+  /* Gallery hero in drawer on mobile */
+  .gallery-main {
+    height: 200px;
+    border-radius: 0;
+  }
+
+  /* Map FABs on mobile: fixed neatly top-right */
   .map-fab-group {
-    top: auto !important;
-    bottom: calc(62vh + 32px + 12px);
-    right: 12px;
-    transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .left-collapsed .map-fab-group {
-    bottom: 20px;
+    top: max(12px, env(safe-area-inset-top, 12px)) !important;
+    right: 12px !important;
+    bottom: auto !important;
+    gap: 8px;
+    z-index: 450;
   }
 
   body:not(.right-collapsed) .map-fab-group {
-    display: none;
+    display: none; /* hidden when full-screen detail view is open */
   }
 
   .map-fab {
-    width: 34px !important;
-    height: 34px !important;
-    font-size: 14px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 15px !important;
   }
 
-  /* Compact panel internals */
-  .panel-brand { padding: 10px 14px 8px; }
-  .brand-flag  { font-size: 22px; }
-  .brand-name  { font-size: 13px; }
-  .brand-sub   { font-size: 10px; }
+  /* Mobile panel internals */
+  .panel-brand {
+    padding: 6px 14px 6px;
+  }
+  .brand-flag { font-size: 22px; }
+  .brand-name { font-size: 13.5px; }
+  .brand-sub { font-size: 10px; }
+  .btn-lucky-header {
+    padding: 3px 8px;
+    font-size: 10.5px;
+  }
 
-  .search-box  { padding: 8px 10px 0; }
-  .chip-group  { padding: 6px 10px 0; gap: 4px; }
-  .chip        { font-size: 11px; padding: 3px 8px; }
-  .area-row    { padding: 6px 10px 0; }
-  .stats-row   { padding: 6px 12px 2px; font-size: 10px; }
+  .search-box {
+    padding: 6px 12px 0;
+  }
+  .search-input {
+    padding: 7px 28px 7px 32px;
+    font-size: 12.5px;
+  }
 
-  .resto-list  { padding: 6px 8px 10px; gap: 7px; }
-  .card-thumb  { width: 64px; height: 64px; }
-  .card-name   { font-size: 12.5px; }
-  .card-snippet { -webkit-line-clamp: 1; }
+  .chip-group {
+    padding: 6px 12px 0;
+    gap: 5px;
+  }
+  .chip {
+    font-size: 11px;
+    padding: 3px 9px;
+  }
 
-  /* Drawer body on mobile */
-  .drawer-body { padding: 12px 14px 20px; gap: 12px; }
-  .drawer-title { font-size: 16px; }
+  .area-row {
+    padding: 6px 12px 0;
+  }
 
-  /* Leaflet controls — move above bottom sheet */
-  .leaflet-control-zoom { margin-bottom: calc(62vh + 10px) !important; }
-  .leaflet-bottom.leaflet-left { bottom: calc(62vh + 4px) !important; }
+  .stats-row {
+    padding: 6px 14px 2px;
+    font-size: 10.5px;
+  }
+
+  .resto-list {
+    padding: 6px 10px 12px;
+    gap: 8px;
+  }
+  .resto-card {
+    padding: 9px;
+  }
+  .card-thumb {
+    width: 68px;
+    height: 68px;
+  }
+  .card-name {
+    font-size: 13px;
+  }
+
+  .drawer-body {
+    padding: 14px 16px 24px;
+    gap: 12px;
+  }
+  .drawer-title {
+    font-size: 17px;
+  }
+
+  /* Leaflet Controls on mobile */
+  .leaflet-top.leaflet-left {
+    top: max(12px, env(safe-area-inset-top, 12px)) !important;
+  }
+  .leaflet-control-zoom {
+    margin-top: 2px !important;
+    margin-left: 12px !important;
+  }
+  .leaflet-bottom.leaflet-left {
+    bottom: calc(var(--mobile-peek-height) + 12px) !important;
+    left: 12px !important;
+    transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(var(--mobile-peek-height) + 12px) !important;
+    right: 12px !important;
+    transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* When sheet is expanded on mobile, dim Leaflet bottom controls */
+  body:not(.left-collapsed) .leaflet-bottom {
+    opacity: 0.2;
+    pointer-events: none;
+  }
 }
 
 /* ══════════════════════════════════════════════════
    RESPONSIVE — Extra small (≤ 360px)
    ══════════════════════════════════════════════════ */
 @media (max-width: 360px) {
-  .float-left .panel-inner { height: 58vh; }
-  .map-fab-group { bottom: calc(58vh + 32px + 10px); }
-  .left-collapsed .map-fab-group { bottom: 16px; }
-  .leaflet-control-zoom { margin-bottom: calc(58vh + 10px) !important; }
-  .leaflet-bottom.leaflet-left { bottom: calc(58vh + 4px) !important; }
+  :root {
+    --mobile-peek-height: 84px;
+    --mobile-expanded-height: 72vh;
+  }
+  .brand-sub { display: none; }
 }
 
 /* ══════════════════════════════════════════════════

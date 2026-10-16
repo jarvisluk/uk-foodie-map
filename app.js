@@ -153,45 +153,227 @@
     });
   }
 
-  /* ── Panel toggle ── */
-  function setupPanels() {
-    // Left panel toggle
-    $('toggleLeft').addEventListener('click', () => {
-      state.leftOpen = !state.leftOpen;
-      $('leftPanel').classList.toggle('collapsed', !state.leftOpen);
-      document.body.classList.toggle('left-collapsed', !state.leftOpen);
-      $('toggleLeftIcon').textContent = state.leftOpen ? '◀' : '▶';
-    });
+  /* ── Panel state & management ── */
+  const isMobile = () => window.innerWidth <= 640;
+  const isTablet = () => window.innerWidth > 640 && window.innerWidth <= 960;
 
-    // Right panel toggle (close)
-    $('toggleRight').addEventListener('click', () => {
+  function syncPanelUI() {
+    // Left panel state
+    $('leftPanel').classList.toggle('collapsed', !state.leftOpen);
+    document.body.classList.toggle('left-collapsed', !state.leftOpen);
+
+    const toggleIcon = $('toggleLeftIcon');
+    if (toggleIcon) toggleIcon.textContent = state.leftOpen ? '◀' : '▶';
+
+    const toggleLabel = $('toggleLeftLabel');
+    if (toggleLabel) toggleLabel.textContent = state.leftOpen ? '收起' : `筛选 (${filteredList.length || 0})`;
+
+    // Right panel state
+    $('rightPanel').classList.toggle('collapsed', !state.rightOpen);
+    document.body.classList.toggle('right-collapsed', !state.rightOpen);
+
+    // Mobile backdrop
+    const backdrop = $('mobileBackdrop');
+    if (backdrop) {
+      const showBackdrop = isMobile() && state.rightOpen;
+      backdrop.classList.toggle('active', showBackdrop);
+    }
+  }
+
+  function toggleLeftPanel() {
+    state.leftOpen = !state.leftOpen;
+    if (state.leftOpen && isTablet() && state.rightOpen) {
       closeRightPanel();
-    });
+    }
+    syncPanelUI();
+  }
 
-    // Start: right collapsed, left open
-    document.body.classList.add('right-collapsed');
-    document.body.classList.remove('left-collapsed');
+  function expandLeftPanel() {
+    if (!state.leftOpen) {
+      state.leftOpen = true;
+      if (isTablet() && state.rightOpen) {
+        closeRightPanel();
+      }
+      syncPanelUI();
+    }
+  }
+
+  function collapseLeftPanel() {
+    if (state.leftOpen) {
+      state.leftOpen = false;
+      syncPanelUI();
+    }
   }
 
   function openRightPanel(item) {
     state.rightOpen = true;
-    $('rightPanel').classList.remove('collapsed');
-    document.body.classList.remove('right-collapsed');
+    currentRestaurant = item;
+
+    // Auto-collapse left panel on tablet or mobile so detail drawer has room
+    if (window.innerWidth <= 960) {
+      state.leftOpen = false;
+    }
+
+    const titleEl = $('drawerHeaderTitle');
+    if (titleEl) titleEl.textContent = item.name;
+
+    syncPanelUI();
     renderDrawer(item);
   }
 
   function closeRightPanel() {
     state.rightOpen = false;
-    $('rightPanel').classList.add('collapsed');
-    document.body.classList.add('right-collapsed');
-    $('drawerContent').innerHTML = `
-      <div class="drawer-placeholder">
-        <div style="font-size:48px">🗺️</div>
-        <div style="font-weight:600;margin-top:12px">点击地图图钉</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-top:6px">或左侧餐厅卡片<br>查看探店详情</div>
-      </div>`;
     currentRestaurant = null;
+    syncPanelUI();
+
+    setTimeout(() => {
+      if (!state.rightOpen) {
+        $('drawerContent').innerHTML = `
+          <div class="drawer-placeholder">
+            <div style="font-size:48px">🗺️</div>
+            <div style="font-weight:600;margin-top:12px">点击地图图钉</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:6px">或左侧餐厅卡片<br>查看探店详情</div>
+          </div>`;
+        const titleEl = $('drawerHeaderTitle');
+        if (titleEl) titleEl.textContent = '探店详情';
+      }
+    }, 320);
+
     document.querySelectorAll('.resto-card').forEach(c => c.classList.remove('active'));
+  }
+
+  /* ── Mobile Touch Drag Gestures ── */
+  function setupSheetDragGestures(el) {
+    let startY = 0;
+    let deltaY = 0;
+    let isTracking = false;
+
+    el.addEventListener('touchstart', (e) => {
+      if (!isMobile()) return;
+      startY = e.touches[0].clientY;
+      deltaY = 0;
+      isTracking = true;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', (e) => {
+      if (!isTracking) return;
+      deltaY = e.touches[0].clientY - startY;
+    }, { passive: true });
+
+    el.addEventListener('touchend', () => {
+      if (!isTracking) return;
+      isTracking = false;
+      if (deltaY > 35) {
+        collapseLeftPanel();
+      } else if (deltaY < -35) {
+        expandLeftPanel();
+      }
+    });
+  }
+
+  function setupPanels() {
+    // Desktop left toggle button
+    $('toggleLeft').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleLeftPanel();
+    });
+
+    // Mobile sheet handle bar
+    const handleBar = $('sheetHandleBar');
+    if (handleBar) {
+      handleBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLeftPanel();
+      });
+      setupSheetDragGestures(handleBar);
+    }
+
+    // Tapping brand area in mobile peek mode expands sheet
+    const brand = $('panelBrand');
+    if (brand) {
+      brand.addEventListener('click', (e) => {
+        if (isMobile() && !state.leftOpen && !e.target.closest('#btnLuckyHeader')) {
+          expandLeftPanel();
+        }
+      });
+    }
+
+    // Tapping search box in mobile peek mode expands sheet
+    const searchInput = $('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('focus', () => {
+        if (isMobile() && !state.leftOpen) {
+          expandLeftPanel();
+        }
+      });
+    }
+
+    // Header lucky button
+    const luckyHeader = $('btnLuckyHeader');
+    if (luckyHeader) {
+      luckyHeader.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pickLucky();
+      });
+    }
+
+    // Desktop right panel toggle (collapse)
+    $('toggleRight').addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeRightPanel();
+    });
+
+    // Drawer header close button
+    const closeBtn = $('drawerCloseBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeRightPanel();
+      });
+    }
+
+    // Drawer header back button (mobile)
+    const backBtn = $('drawerBackBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeRightPanel();
+      });
+    }
+
+    // Mobile backdrop click
+    const backdrop = $('mobileBackdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        if (state.rightOpen) closeRightPanel();
+        else if (state.leftOpen) collapseLeftPanel();
+      });
+    }
+
+    // Clicking on map
+    map.on('click', () => {
+      if (isMobile()) {
+        if (state.rightOpen) {
+          closeRightPanel();
+        } else if (state.leftOpen) {
+          collapseLeftPanel();
+        }
+      } else {
+        if (state.rightOpen) {
+          closeRightPanel();
+        }
+      }
+    });
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      syncPanelUI();
+    });
+
+    // Initial state
+    state.leftOpen = true;
+    state.rightOpen = false;
+    syncPanelUI();
   }
 
   /* ── Filters ── */
@@ -279,6 +461,8 @@
     const photoCount = filteredList.reduce((a, r) => a + (r.images || []).length, 0);
     $('visibleCount').textContent = filteredList.length;
     $('totalPhotosCount').textContent = photoCount;
+    const toggleLabel = $('toggleLeftLabel');
+    if (toggleLabel) toggleLabel.textContent = state.leftOpen ? '收起' : `筛选 (${filteredList.length})`;
 
     renderCards();
     updateMarkers();

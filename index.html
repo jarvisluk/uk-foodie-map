@@ -17,19 +17,26 @@
 
 <!-- ===== LEFT PANEL ===== -->
 <div class="float-panel float-left" id="leftPanel">
-  <!-- Toggle button (always visible, outside panel) -->
+  <!-- Desktop toggle button (floating beside panel) -->
   <button class="panel-toggle toggle-left" id="toggleLeft" title="折叠/展开筛选列表">
-    <span id="toggleLeftIcon">◀</span>
+    <span class="toggle-icon" id="toggleLeftIcon">◀</span>
+    <span class="toggle-label" id="toggleLeftLabel">筛选列表</span>
   </button>
 
   <div class="panel-inner" id="leftPanelInner">
+    <!-- Mobile Sheet Handle Bar -->
+    <div class="sheet-handle-bar" id="sheetHandleBar" title="点击或拖动切换展开/收起">
+      <span class="sheet-handle-pill"></span>
+    </div>
+
     <!-- Branding -->
-    <div class="panel-brand">
+    <div class="panel-brand" id="panelBrand">
       <span class="brand-flag">🇬🇧</span>
-      <div>
+      <div class="brand-meta">
         <div class="brand-name">英留美食地图</div>
         <div class="brand-sub">137 家真实探店 · 250+ 实拍图</div>
       </div>
+      <button class="btn-lucky-header" id="btnLuckyHeader" title="今天吃什么？🎲">🎲 随机</button>
     </div>
 
     <!-- Search -->
@@ -83,7 +90,7 @@
     <div class="stats-row">
       <span>找到 <strong id="visibleCount">0</strong> 家</span>
       <span><strong id="totalPhotosCount">0</strong> 张图</span>
-      <button class="btn-lucky" id="btnLucky">🎲 随机</button>
+      <button class="btn-lucky" id="btnLucky">🎲 随手抽</button>
     </div>
 
     <!-- Restaurant list -->
@@ -92,9 +99,20 @@
 </div>
 
 <!-- ===== RIGHT PANEL (Detail Drawer) ===== -->
-<div class="float-panel float-right" id="rightPanel">
-  <button class="panel-toggle toggle-right" id="toggleRight" title="关闭详情">▶</button>
+<div class="float-panel float-right collapsed" id="rightPanel">
+  <button class="panel-toggle toggle-right" id="toggleRight" title="收起详情">
+    <span id="toggleRightIcon">▶</span>
+  </button>
   <div class="panel-inner" id="rightPanelInner">
+    <!-- Drawer Header Bar -->
+    <div class="drawer-header-bar" id="drawerHeaderBar">
+      <button class="drawer-back-btn" id="drawerBackBtn" title="返回列表">
+        <span class="back-arrow">‹</span> 返回列表
+      </button>
+      <div class="drawer-header-title" id="drawerHeaderTitle">探店详情</div>
+      <button class="drawer-close-btn" id="drawerCloseBtn" title="关闭详情">✕</button>
+    </div>
+
     <div id="drawerContent">
       <div class="drawer-placeholder">
         <div style="font-size:48px">🗺️</div>
@@ -104,6 +122,9 @@
     </div>
   </div>
 </div>
+
+<!-- Mobile backdrop -->
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
 
 <!-- Map tool buttons (floating, top-right) -->
 <div class="map-fab-group">
