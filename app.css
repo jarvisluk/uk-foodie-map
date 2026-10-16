@@ -851,20 +851,171 @@ body:not(.right-collapsed) .map-fab-group {
   font-family: var(--font);
 }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .float-panel { top: auto; bottom: 0; left: 0; right: 0; }
-  .float-left  { flex-direction: column-reverse; top: 0; bottom: 0; left: 0; right: auto; }
-  .float-right { flex-direction: column; top: 0; bottom: 0; right: 0; left: auto; }
-  .panel-inner { width: 300px !important; }
-  .float-right .panel-inner { width: 300px !important; }
-  .map-fab-group { right: 8px; top: 8px; }
-  body:not(.right-collapsed) .map-fab-group { right: calc(300px + 8px + 6px + 32px); }
+/* ══════════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤ 900px)
+   ══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  :root { --panel-width: 320px; }
+  .float-right .panel-inner { width: 340px; }
+  body:not(.right-collapsed) .map-fab-group {
+    right: calc(340px + 16px + 6px + 32px);
+  }
 }
 
-/* Leaflet layer control dark mode */
+/* ══════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤ 640px)
+   Panels become bottom sheets that slide up
+   ══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── Left panel: bottom sheet ── */
+  .float-left {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .float-left .panel-inner {
+    width: 100% !important;
+    height: 62vh;
+    border-radius: var(--panel-radius) var(--panel-radius) 0 0;
+    transform: translateY(0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity   0.3s ease;
+  }
+
+  .float-left.collapsed .panel-inner {
+    width: 100% !important;
+    height: 62vh;
+    opacity: 1;
+    transform: translateY(100%);
+    border-width: 1px;
+  }
+
+  .toggle-left {
+    width: 52px !important;
+    height: 22px !important;
+    border-radius: 999px !important;
+    margin: 0 auto !important;
+    font-size: 10px !important;
+    align-self: center !important;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ── Right panel: full-screen overlay from right ── */
+  .float-right {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+    z-index: 550;
+  }
+
+  .float-right .panel-inner {
+    width: 100% !important;
+    height: 100vh;
+    border-radius: 0;
+    transform: translateX(0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity   0.3s ease;
+    overflow-y: auto;
+  }
+
+  .float-right.collapsed .panel-inner {
+    width: 100% !important;
+    height: 100vh;
+    opacity: 0;
+    transform: translateX(100%);
+    border-width: 1px;
+    pointer-events: none;
+  }
+
+  .toggle-right {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    margin: 0 !important;
+    z-index: 20;
+  }
+
+  /* Gallery on mobile */
+  .gallery-main { height: 180px; border-radius: 0; }
+
+  /* FABs — above the bottom sheet */
+  .map-fab-group {
+    top: auto !important;
+    bottom: calc(62vh + 32px + 12px);
+    right: 12px;
+    transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .left-collapsed .map-fab-group {
+    bottom: 20px;
+  }
+
+  body:not(.right-collapsed) .map-fab-group {
+    display: none;
+  }
+
+  .map-fab {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 14px !important;
+  }
+
+  /* Compact panel internals */
+  .panel-brand { padding: 10px 14px 8px; }
+  .brand-flag  { font-size: 22px; }
+  .brand-name  { font-size: 13px; }
+  .brand-sub   { font-size: 10px; }
+
+  .search-box  { padding: 8px 10px 0; }
+  .chip-group  { padding: 6px 10px 0; gap: 4px; }
+  .chip        { font-size: 11px; padding: 3px 8px; }
+  .area-row    { padding: 6px 10px 0; }
+  .stats-row   { padding: 6px 12px 2px; font-size: 10px; }
+
+  .resto-list  { padding: 6px 8px 10px; gap: 7px; }
+  .card-thumb  { width: 64px; height: 64px; }
+  .card-name   { font-size: 12.5px; }
+  .card-snippet { -webkit-line-clamp: 1; }
+
+  /* Drawer body on mobile */
+  .drawer-body { padding: 12px 14px 20px; gap: 12px; }
+  .drawer-title { font-size: 16px; }
+
+  /* Leaflet controls — move above bottom sheet */
+  .leaflet-control-zoom { margin-bottom: calc(62vh + 10px) !important; }
+  .leaflet-bottom.leaflet-left { bottom: calc(62vh + 4px) !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE — Extra small (≤ 360px)
+   ══════════════════════════════════════════════════ */
+@media (max-width: 360px) {
+  .float-left .panel-inner { height: 58vh; }
+  .map-fab-group { bottom: calc(58vh + 32px + 10px); }
+  .left-collapsed .map-fab-group { bottom: 16px; }
+  .leaflet-control-zoom { margin-bottom: calc(58vh + 10px) !important; }
+  .leaflet-bottom.leaflet-left { bottom: calc(58vh + 4px) !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   Leaflet — dark mode overrides
+   ══════════════════════════════════════════════════ */
 [data-theme="dark"] .leaflet-control-layers {
   background: var(--bg-card);
   color: var(--text-main);
   border: 1px solid var(--border);
+}
+[data-theme="dark"] .leaflet-control-zoom a {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border);
 }

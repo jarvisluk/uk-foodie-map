@@ -159,22 +159,23 @@
     $('toggleLeft').addEventListener('click', () => {
       state.leftOpen = !state.leftOpen;
       $('leftPanel').classList.toggle('collapsed', !state.leftOpen);
+      document.body.classList.toggle('left-collapsed', !state.leftOpen);
       $('toggleLeftIcon').textContent = state.leftOpen ? '◀' : '▶';
     });
 
-    // Right panel toggle
+    // Right panel toggle (close)
     $('toggleRight').addEventListener('click', () => {
       closeRightPanel();
     });
 
-    // Update body class for FAB positioning
-    syncBodyClass();
+    // Start: right collapsed, left open
+    document.body.classList.add('right-collapsed');
+    document.body.classList.remove('left-collapsed');
   }
 
   function openRightPanel(item) {
     state.rightOpen = true;
     $('rightPanel').classList.remove('collapsed');
-    $('toggleRight').style.display = 'flex';
     document.body.classList.remove('right-collapsed');
     renderDrawer(item);
   }
@@ -183,7 +184,6 @@
     state.rightOpen = false;
     $('rightPanel').classList.add('collapsed');
     document.body.classList.add('right-collapsed');
-    // Reset to placeholder
     $('drawerContent').innerHTML = `
       <div class="drawer-placeholder">
         <div style="font-size:48px">🗺️</div>
@@ -192,10 +192,6 @@
       </div>`;
     currentRestaurant = null;
     document.querySelectorAll('.resto-card').forEach(c => c.classList.remove('active'));
-  }
-
-  function syncBodyClass() {
-    document.body.classList.toggle('right-collapsed', !state.rightOpen);
   }
 
   /* ── Filters ── */
